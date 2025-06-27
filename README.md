@@ -24,6 +24,12 @@ DInfluencer é uma plataforma que conecta marcas e influenciadores digitais, fac
 ## Instalação
 
 ```bash
+# Clonar o repositório
+git clone https://github.com/AUTVSIONAI/sitedigital.git
+
+# Entrar no diretório do projeto
+cd sitedigital
+
 # Instalar dependências
 npm install
 
