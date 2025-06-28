@@ -144,9 +144,10 @@ const CampaignPage: React.FC = () => {
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [openCampaignDetailsDialog, setOpenCampaignDetailsDialog] = useState(false);
   const [openInfluencersDialog, setOpenInfluencersDialog] = useState(false);
+  const [appliedCampaignIds, setAppliedCampaignIds] = useState<Set<string>>(new Set());
 
-  // Mock data for campaigns
-  const mockCampaigns: Campaign[] = [
+  // Initial mock data for campaigns
+  const initialMockCampaigns: Campaign[] = [
     {
       id: '1',
       title: 'Lançamento Coleção Verão',
@@ -259,8 +260,9 @@ const CampaignPage: React.FC = () => {
     },
   ];
 
+  const [campaigns, setCampaigns] = useState<Campaign[]>(initialMockCampaigns);
   // Mock data for influencers
-  const mockInfluencers: Influencer[] = [
+  const initialMockInfluencers: Influencer[] = [
     {
       id: '1',
       name: 'Ana Silva',
@@ -327,6 +329,8 @@ const CampaignPage: React.FC = () => {
       status: 'rejected',
     },
   ];
+
+  const [influencers, setInfluencers] = useState<Influencer[]>(initialMockInfluencers);
 
   // New campaign form state
   const [newCampaign, setNewCampaign] = useState({
@@ -422,13 +426,99 @@ const CampaignPage: React.FC = () => {
   };
 
   const handleCreateCampaign = () => {
-    // Here you would typically send the data to your backend
-    console.log('Creating campaign:', newCampaign);
-    handleCreateDialogClose();
-    // For demo purposes, we'll just close the dialog
+    if (user && user.type === 'brand') { // Ensure user is a brand
+      const newCampaignData: Campaign = {
+        id: Date.now().toString(),
+        title: newCampaign.title,
+        brand: { // Mocking brand data based on logged-in user
+          id: user.id,
+          name: user.name || 'Minha Marca',
+          logo: user.avatar || 'https://via.placeholder.com/150',
+        },
+        description: newCampaign.description,
+        budget: newCampaign.budget,
+        category: newCampaign.category,
+        platforms: newCampaign.platforms,
+        requirements: newCampaign.requirements,
+        startDate: newCampaign.startDate,
+        endDate: newCampaign.endDate,
+        status: 'draft', // Default status for new campaigns
+        location: newCampaign.location,
+        applicants: 0,
+        image: newCampaign.image || 'https://via.placeholder.com/800x400', // Use provided image or a default
+        influencerCount: 0,
+        viewCount: 0,
+      };
+      setCampaigns(prevCampaigns => [newCampaignData, ...prevCampaigns]);
+      handleCreateDialogClose();
+    } else {
+      // Handle case where user is not a brand or not logged in, though UI should prevent this.
+      console.error("Apenas marcas podem criar campanhas.");
+    }
   };
 
-  const filteredCampaigns = mockCampaigns.filter((campaign) => {
+  const handleApplyToCampaign = (campaignId: string) => {
+    if (user?.type === 'influencer') {
+      setCampaigns(prevCampaigns =>
+        prevCampaigns.map(campaign =>
+          campaign.id === campaignId
+            ? { ...campaign, applicants: campaign.applicants + 1 }
+            : campaign
+        )
+      );
+      setAppliedCampaignIds(prevIds => new Set(prevIds).add(campaignId));
+      // console.log(`Influencer ${user.id} applied to campaign ${campaignId}`);
+    } else {
+      console.error("Apenas influenciadores podem aplicar para campanhas.");
+    }
+  };
+
+  const handleInfluencerStatusUpdate = (influencerId: string, campaignId: string, newStatus: 'accepted' | 'rejected') => {
+    if (user?.type !== 'brand' || !selectedCampaign || selectedCampaign.id !== campaignId) {
+      console.error("Ação não permitida ou campanha não selecionada corretamente.");
+      return;
+    }
+
+    // Update influencer status
+    setInfluencers(prevInfluencers =>
+      prevInfluencers.map(inf =>
+        inf.id === influencerId ? { ...inf, status: newStatus } : inf
+      )
+    );
+
+    // Update campaign counters
+    setCampaigns(prevCampaigns =>
+      prevCampaigns.map(camp => {
+        if (camp.id === campaignId) {
+          let updatedApplicants = camp.applicants;
+          let updatedInfluencerCount = camp.influencerCount;
+
+          // Find the original status of this influencer for this campaign context
+          // This is a bit tricky because the influencer status is global in our mock data
+          // We assume the influencer was 'applied' or 'invited' before this action for counter adjustments.
+          const currentInfluencer = initialMockInfluencers.find(i => i.id === influencerId);
+
+
+          if (newStatus === 'accepted') {
+            updatedInfluencerCount += 1;
+            // Only decrement applicants if they were previously in a state that counted them as an applicant (e.g. 'applied')
+            if (currentInfluencer && currentInfluencer.status === 'applied') {
+              updatedApplicants = Math.max(0, updatedApplicants - 1);
+            }
+          } else if (newStatus === 'rejected') {
+            // Only decrement applicants if they were previously in a state that counted them as an applicant
+            if (currentInfluencer && currentInfluencer.status === 'applied') {
+               updatedApplicants = Math.max(0, updatedApplicants - 1);
+            }
+          }
+          return { ...camp, applicants: updatedApplicants, influencerCount: updatedInfluencerCount };
+        }
+        return camp;
+      })
+    );
+  };
+
+  const filteredCampaigns = campaigns.filter((campaign) => {
     // Filter by search query
     if (
       searchQuery &&
@@ -567,7 +657,7 @@ const CampaignPage: React.FC = () => {
     return value.toString();
   };
 
-  const steps = ['Informações Básicas', 'Detalhes da Campanha', 'Revisão'];
+  // const steps = ['Informações Básicas', 'Detalhes da Campanha', 'Revisão']; // Stepper será removido
 
   return (
     <Container maxWidth="xl" sx={{ mt: 2, mb: 4 }}>
@@ -794,8 +884,13 @@ const CampaignPage: React.FC = () => {
                         Ver Detalhes
                       </Button>
                       {user?.type === 'influencer' && campaign.status === 'active' && (
-                        <Button size="small" color="primary">
-                          Aplicar
+                        <Button
+                          size="small"
+                          color="primary"
+                          onClick={() => handleApplyToCampaign(campaign.id)}
+                          disabled={appliedCampaignIds.has(campaign.id)}
+                        >
+                          {appliedCampaignIds.has(campaign.id) ? 'Aplicado' : 'Aplicar'}
                         </Button>
                       )}
                       {user?.type === 'brand' && (
@@ -917,8 +1012,13 @@ const CampaignPage: React.FC = () => {
                         Ver Detalhes
                       </Button>
                       {user?.type === 'influencer' && (
-                        <Button size="small" color="primary">
-                          Aplicar
+                        <Button
+                          size="small"
+                          color="primary"
+                          onClick={() => handleApplyToCampaign(campaign.id)}
+                          disabled={appliedCampaignIds.has(campaign.id)}
+                        >
+                          {appliedCampaignIds.has(campaign.id) ? 'Aplicado' : 'Aplicar'}
                         </Button>
                       )}
                       {user?.type === 'brand' && (
@@ -1190,117 +1290,150 @@ const CampaignPage: React.FC = () => {
           </Box>
         </DialogTitle>
         <DialogContent dividers>
-          <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
-            {steps.map((label) => (
-              <Step key={label}>
-                <StepLabel>{label}</StepLabel>
-              </Step>
-            ))}
-          </Stepper>
-
-          {activeStep === 0 && (
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Título da Campanha"
-                  value={newCampaign.title}
-                  onChange={(e) => handleNewCampaignChange('title', e.target.value)}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  required
-                  fullWidth
-                  multiline
-                  rows={4}
-                  label="Descrição"
-                  value={newCampaign.description}
-                  onChange={(e) => handleNewCampaignChange('description', e.target.value)}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth required>
-                  <InputLabel>Categoria</InputLabel>
-                  <Select
-                    value={newCampaign.category}
-                    onChange={(e) => handleNewCampaignChange('category', e.target.value)}
-                    label="Categoria"
-                  >
-                    <MenuItem value="Moda">Moda</MenuItem>
-                    <MenuItem value="Beleza">Beleza</MenuItem>
-                    <MenuItem value="Tecnologia">Tecnologia</MenuItem>
-                    <MenuItem value="Fitness">Fitness</MenuItem>
-                    <MenuItem value="Finanças">Finanças</MenuItem>
-                    <MenuItem value="Alimentação">Alimentação</MenuItem>
-                    <MenuItem value="Viagem">Viagem</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Orçamento"
-                  type="number"
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start">R$</InputAdornment>,
-                  }}
-                  value={newCampaign.budget}
-                  onChange={(e) => handleNewCampaignChange('budget', Number(e.target.value))}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth required>
-                  <InputLabel>Plataformas</InputLabel>
-                  <Select
-                    multiple
-                    value={newCampaign.platforms}
-                    onChange={(e) => handleNewCampaignChange('platforms', e.target.value)}
-                    label="Plataformas"
-                    renderValue={(selected) => (
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {(selected as string[]).map((value) => (
-                          <Chip key={value} label={value} size="small" />
-                        ))}
-                      </Box>
-                    )}
-                  >
-                    <MenuItem value="Instagram">Instagram</MenuItem>
-                    <MenuItem value="YouTube">YouTube</MenuItem>
-                    <MenuItem value="TikTok">TikTok</MenuItem>
-                    <MenuItem value="Twitter">Twitter</MenuItem>
-                    <MenuItem value="Facebook">Facebook</MenuItem>
-                    <MenuItem value="LinkedIn">LinkedIn</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Localização"
-                  value={newCampaign.location}
-                  onChange={(e) => handleNewCampaignChange('location', e.target.value)}
-                />
-              </Grid>
+          {/* Stepper removido para simplificar o formulário para uma única etapa */}
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <TextField
+                required
+                fullWidth
+                label="Título da Campanha"
+                value={newCampaign.title}
+                onChange={(e) => handleNewCampaignChange('title', e.target.value)}
+                sx={{ mb: 2 }}
+              />
             </Grid>
-          )}
+            <Grid item xs={12}>
+              <TextField
+                required
+                fullWidth
+                multiline
+                rows={3}
+                label="Descrição"
+                value={newCampaign.description}
+                onChange={(e) => handleNewCampaignChange('description', e.target.value)}
+                sx={{ mb: 2 }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                rows={2}
+                label="Requisitos"
+                value={newCampaign.requirements}
+                onChange={(e) => handleNewCampaignChange('requirements', e.target.value)}
+                sx={{ mb: 2 }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth required sx={{ mb: 2 }}>
+                <InputLabel>Categoria</InputLabel>
+                <Select
+                  value={newCampaign.category}
+                  onChange={(e) => handleNewCampaignChange('category', e.target.value)}
+                  label="Categoria"
+                >
+                  <MenuItem value="Moda">Moda</MenuItem>
+                  <MenuItem value="Beleza">Beleza</MenuItem>
+                  <MenuItem value="Tecnologia">Tecnologia</MenuItem>
+                  <MenuItem value="Fitness">Fitness</MenuItem>
+                  <MenuItem value="Finanças">Finanças</MenuItem>
+                  <MenuItem value="Alimentação">Alimentação</MenuItem>
+                  <MenuItem value="Viagem">Viagem</MenuItem>
+                  <MenuItem value="Games">Games</MenuItem>
+                  <MenuItem value="Outra">Outra</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                required
+                fullWidth
+                label="Orçamento"
+                type="number"
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                }}
+                value={newCampaign.budget}
+                onChange={(e) => handleNewCampaignChange('budget', Number(e.target.value))}
+                sx={{ mb: 2 }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                required
+                fullWidth
+                type="date"
+                label="Data de Início"
+                value={newCampaign.startDate}
+                onChange={(e) => handleNewCampaignChange('startDate', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                sx={{ mb: 2 }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                required
+                fullWidth
+                type="date"
+                label="Data de Término"
+                value={newCampaign.endDate}
+                onChange={(e) => handleNewCampaignChange('endDate', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                sx={{ mb: 2 }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControl fullWidth required sx={{ mb: 2 }}>
+                <InputLabel>Plataformas</InputLabel>
+                <Select
+                  multiple
+                  value={newCampaign.platforms}
+                  onChange={(e) => handleNewCampaignChange('platforms', e.target.value)}
+                  label="Plataformas"
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {(selected as string[]).map((value) => (
+                        <Chip key={value} label={value} size="small" />
+                      ))}
+                    </Box>
+                  )}
+                >
+                  <MenuItem value="Instagram">Instagram</MenuItem>
+                  <MenuItem value="YouTube">YouTube</MenuItem>
+                  <MenuItem value="TikTok">TikTok</MenuItem>
+                  <MenuItem value="Twitter">Twitter</MenuItem>
+                  <MenuItem value="Facebook">Facebook</MenuItem>
+                  <MenuItem value="LinkedIn">LinkedIn</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Localização (País, Cidade, etc.)"
+                value={newCampaign.location}
+                onChange={(e) => handleNewCampaignChange('location', e.target.value)}
+                sx={{ mb: 2 }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="URL da Imagem da Campanha"
+                value={newCampaign.image}
+                onChange={(e) => handleNewCampaignChange('image', e.target.value)}
+                sx={{ mb: 2 }}
+              />
+            </Grid>
+          </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCreateDialogClose}>Cancelar</Button>
-          {activeStep > 0 && (
-            <Button onClick={handleBack}>Voltar</Button>
-          )}
-          {activeStep < steps.length - 1 ? (
-            <Button onClick={handleNext} variant="contained" color="primary">
-              Próximo
-            </Button>
-          ) : (
-            <Button onClick={handleCreateCampaign} variant="contained" color="primary">
-              Criar Campanha
-            </Button>
-          )}
+          {/* Botões de Voltar/Próximo removidos pois o Stepper foi removido */}
+          <Button onClick={handleCreateCampaign} variant="contained" color="primary">
+            Criar Campanha
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -1431,8 +1564,10 @@ const CampaignPage: React.FC = () => {
                       color="primary"
                       size="large"
                       sx={{ mb: 2 }}
+                      onClick={() => handleApplyToCampaign(selectedCampaign.id)}
+                      disabled={appliedCampaignIds.has(selectedCampaign.id)}
                     >
-                      Aplicar para esta Campanha
+                      {appliedCampaignIds.has(selectedCampaign.id) ? 'Aplicado' : 'Aplicar para esta Campanha'}
                     </Button>
                   )}
                   {user?.type === 'brand' && (
@@ -1482,22 +1617,22 @@ const CampaignPage: React.FC = () => {
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                   <Chip
-                    label={`${mockInfluencers.filter((i) => i.status === 'accepted').length} Aceitos`}
+                    label={`${influencers.filter((i) => i.status === 'accepted').length} Aceitos`}
                     color="success"
                     size="small"
                   />
                   <Chip
-                    label={`${mockInfluencers.filter((i) => i.status === 'applied').length} Pendentes`}
+                    label={`${influencers.filter((i) => i.status === 'applied').length} Pendentes`}
                     color="info"
                     size="small"
                   />
                   <Chip
-                    label={`${mockInfluencers.filter((i) => i.status === 'invited').length} Convidados`}
+                    label={`${influencers.filter((i) => i.status === 'invited').length} Convidados`}
                     color="warning"
                     size="small"
                   />
                   <Chip
-                    label={`${mockInfluencers.filter((i) => i.status === 'rejected').length} Rejeitados`}
+                    label={`${influencers.filter((i) => i.status === 'rejected').length} Rejeitados`}
                     color="error"
                     size="small"
                   />
@@ -1519,7 +1654,7 @@ const CampaignPage: React.FC = () => {
               </Box>
 
               <Grid container spacing={2}>
-                {mockInfluencers.map((influencer) => (
+                {influencers.map((influencer) => (
                   <Grid item xs={12} key={influencer.id}>
                     <Paper variant="outlined" sx={{ p: 2 }}>
                       <Grid container spacing={2}>
@@ -1588,6 +1723,7 @@ const CampaignPage: React.FC = () => {
                                     color="primary"
                                     size="small"
                                     fullWidth
+                                    onClick={() => handleInfluencerStatusUpdate(influencer.id, selectedCampaign.id, 'accepted')}
                                   >
                                     Aceitar
                                   </Button>
@@ -1596,39 +1732,26 @@ const CampaignPage: React.FC = () => {
                                     color="error"
                                     size="small"
                                     fullWidth
+                                    onClick={() => handleInfluencerStatusUpdate(influencer.id, selectedCampaign.id, 'rejected')}
                                   >
                                     Rejeitar
                                   </Button>
                                 </Box>
                               )}
+                              {/* Logic for other statuses like invited, accepted, rejected can be expanded here */}
                               {influencer.status === 'invited' && (
-                                <Button
-                                  variant="outlined"
-                                  color="primary"
-                                  size="small"
-                                  fullWidth
-                                >
-                                  Lembrar
+                                <Button variant="outlined" color="secondary" size="small" fullWidth disabled>
+                                  Convidado
                                 </Button>
                               )}
                               {influencer.status === 'accepted' && (
-                                <Button
-                                  variant="outlined"
-                                  color="primary"
-                                  size="small"
-                                  fullWidth
-                                >
-                                  Mensagem
+                                <Button variant="contained" color="success" size="small" fullWidth disabled>
+                                  Aceito
                                 </Button>
                               )}
                               {influencer.status === 'rejected' && (
-                                <Button
-                                  variant="outlined"
-                                  color="primary"
-                                  size="small"
-                                  fullWidth
-                                >
-                                  Reconvidar
+                                <Button variant="contained" color="error" size="small" fullWidth disabled>
+                                  Rejeitado
                                 </Button>
                               )}
                             </Box>
