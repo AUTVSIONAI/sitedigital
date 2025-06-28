@@ -64,19 +64,19 @@ const HomePage: React.FC = () => {
     {
       name: 'Ana Silva',
       role: 'Influenciadora de Moda',
-      image: 'https://via.placeholder.com/150',
+      image: 'https://placehold.co/150',
       text: 'O DInfluencer transformou minha carreira como influenciadora. Consegui parcerias com marcas que realmente combinam com meu estilo e valores.',
     },
     {
       name: 'Carlos Mendes',
       role: 'Gerente de Marketing, Marca XYZ',
-      image: 'https://via.placeholder.com/150',
+      image: 'https://placehold.co/150',
       text: 'Encontrar os influenciadores certos para nossas campanhas nunca foi tão fácil. A plataforma nos economiza tempo e recursos, com resultados muito melhores.',
     },
     {
       name: 'Juliana Costa',
       role: 'Criadora de Conteúdo',
-      image: 'https://via.placeholder.com/150',
+      image: 'https://placehold.co/150',
       text: 'As ferramentas de análise me ajudam a entender melhor meu desempenho e a melhorar minhas colaborações com as marcas.',
     },
   ];
@@ -136,7 +136,7 @@ const HomePage: React.FC = () => {
             <Grid item xs={12} md={6}>
               <Box
                 component="img"
-                src="https://via.placeholder.com/600x400"
+                src="https://placehold.co/600x400?text=Conectando+Talentos"
                 alt="Influencer Marketing"
                 sx={{
                   width: '100%',

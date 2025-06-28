@@ -154,7 +154,7 @@ const CampaignPage: React.FC = () => {
       brand: {
         id: '1',
         name: 'Moda Sustentável',
-        logo: 'https://via.placeholder.com/150',
+        logo: 'https://placehold.co/150',
       },
       description: 'Campanha para divulgação da nova coleção de roupas sustentáveis para o verão.',
       budget: 15000,
@@ -166,7 +166,7 @@ const CampaignPage: React.FC = () => {
       status: 'active',
       location: 'Brasil',
       applicants: 24,
-      image: 'https://via.placeholder.com/800x400',
+      image: 'https://placehold.co/800x400',
       influencerCount: 5,
       viewCount: 1250,
     },
@@ -176,7 +176,7 @@ const CampaignPage: React.FC = () => {
       brand: {
         id: '2',
         name: 'Tech Gadgets',
-        logo: 'https://via.placeholder.com/150',
+        logo: 'https://placehold.co/150',
       },
       description: 'Campanha para review do nosso novo smartphone com tecnologia de ponta.',
       budget: 25000,
@@ -188,7 +188,7 @@ const CampaignPage: React.FC = () => {
       status: 'active',
       location: 'Brasil',
       applicants: 18,
-      image: 'https://via.placeholder.com/800x400',
+      image: 'https://placehold.co/800x400',
       influencerCount: 3,
       viewCount: 980,
     },
@@ -198,7 +198,7 @@ const CampaignPage: React.FC = () => {
       brand: {
         id: '3',
         name: 'Beleza Natural',
-        logo: 'https://via.placeholder.com/150',
+        logo: 'https://placehold.co/150',
       },
       description: 'Divulgação da nossa linha de produtos de beleza 100% naturais e veganos.',
       budget: 10000,
@@ -210,7 +210,7 @@ const CampaignPage: React.FC = () => {
       status: 'completed',
       location: 'Brasil',
       applicants: 32,
-      image: 'https://via.placeholder.com/800x400',
+      image: 'https://placehold.co/800x400',
       influencerCount: 8,
       viewCount: 2100,
     },
@@ -220,7 +220,7 @@ const CampaignPage: React.FC = () => {
       brand: {
         id: '4',
         name: 'Suplementos Pro',
-        logo: 'https://via.placeholder.com/150',
+        logo: 'https://placehold.co/150',
       },
       description: 'Campanha para divulgação da nossa linha de suplementos para o verão.',
       budget: 20000,
@@ -232,7 +232,7 @@ const CampaignPage: React.FC = () => {
       status: 'active',
       location: 'Brasil',
       applicants: 15,
-      image: 'https://via.placeholder.com/800x400',
+      image: 'https://placehold.co/800x400',
       influencerCount: 4,
       viewCount: 850,
     },
@@ -242,7 +242,7 @@ const CampaignPage: React.FC = () => {
       brand: {
         id: '5',
         name: 'FinTech Solutions',
-        logo: 'https://via.placeholder.com/150',
+        logo: 'https://placehold.co/150',
       },
       description: 'Campanha para divulgação do nosso novo aplicativo de gestão financeira pessoal.',
       budget: 30000,
@@ -254,7 +254,7 @@ const CampaignPage: React.FC = () => {
       status: 'draft',
       location: 'Brasil',
       applicants: 0,
-      image: 'https://via.placeholder.com/800x400',
+      image: 'https://placehold.co/800x400',
       influencerCount: 0,
       viewCount: 0,
     },
@@ -266,7 +266,7 @@ const CampaignPage: React.FC = () => {
     {
       id: '1',
       name: 'Ana Silva',
-      avatar: 'https://via.placeholder.com/150',
+      avatar: 'https://placehold.co/150',
       category: 'Moda',
       followers: 250000,
       engagement: 3.5,
@@ -279,7 +279,7 @@ const CampaignPage: React.FC = () => {
     {
       id: '2',
       name: 'Carlos Mendes',
-      avatar: 'https://via.placeholder.com/150',
+      avatar: 'https://placehold.co/150',
       category: 'Tecnologia',
       followers: 500000,
       engagement: 4.2,
@@ -292,7 +292,7 @@ const CampaignPage: React.FC = () => {
     {
       id: '3',
       name: 'Fernanda Lima',
-      avatar: 'https://via.placeholder.com/150',
+      avatar: 'https://placehold.co/150',
       category: 'Beleza',
       followers: 180000,
       engagement: 5.1,
@@ -305,7 +305,7 @@ const CampaignPage: React.FC = () => {
     {
       id: '4',
       name: 'Pedro Alves',
-      avatar: 'https://via.placeholder.com/150',
+      avatar: 'https://placehold.co/150',
       category: 'Fitness',
       followers: 320000,
       engagement: 4.8,
@@ -318,7 +318,7 @@ const CampaignPage: React.FC = () => {
     {
       id: '5',
       name: 'Juliana Costa',
-      avatar: 'https://via.placeholder.com/150',
+      avatar: 'https://placehold.co/150',
       category: 'Finanças',
       followers: 150000,
       engagement: 3.9,
@@ -343,7 +343,7 @@ const CampaignPage: React.FC = () => {
     startDate: '',
     endDate: '',
     location: '',
-    image: 'https://via.placeholder.com/800x400',
+    image: 'https://placehold.co/800x400',
   });
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -433,7 +433,7 @@ const CampaignPage: React.FC = () => {
         brand: { // Mocking brand data based on logged-in user
           id: user.id,
           name: user.name || 'Minha Marca',
-          logo: user.avatar || 'https://via.placeholder.com/150',
+          logo: user.avatar || 'https://placehold.co/150',
         },
         description: newCampaign.description,
         budget: newCampaign.budget,
@@ -445,7 +445,7 @@ const CampaignPage: React.FC = () => {
         status: 'draft', // Default status for new campaigns
         location: newCampaign.location,
         applicants: 0,
-        image: newCampaign.image || 'https://via.placeholder.com/800x400', // Use provided image or a default
+        image: newCampaign.image || 'https://placehold.co/800x400', // Use provided image or a default
         influencerCount: 0,
         viewCount: 0,
       };
